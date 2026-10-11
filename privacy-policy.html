@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#07110f" />
+  <title>Privacy Policy — EcoDisassemble AR</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="shell" style="padding-top: 5vh;">
+    <h1>Privacy Policy</h1>
+    <p><strong>Your device is the vault.</strong> EcoDisassemble AR is a privacy-first application.</p>
+    
+    <h2>1. Local Data (On-Device)</h2>
+    <p>All images, video clips, user-entered symptoms, and local repair history are stored securely on your device using IndexedDB/OPFS. This data is <strong>never</strong> transmitted to any external server without your explicit action.</p>
+    
+    <h2>2. Edge-AI Processing</h2>
+    <p>We utilize ONNX Runtime Web to perform image and video analysis locally on your device's hardware. Your photos are not sent to a cloud API for inference.</p>
+    
+    <h2>3. Cloud Synchronization (Opt-In)</h2>
+    <p>If you choose to sync data for inventory telemetry, the payload is strictly limited to:</p>
+    <ul>
+      <li><code>part_name</code> (String)</li>
+      <li><code>quantity</code> (Integer)</li>
+      <li><code>hazard_flag</code> (Boolean)</li>
+    </ul>
+    <p>We do not transmit user identifiers, location data, or visual media.</p>
+    
+    <h2>4. Cookies & Local Storage</h2>
+    <p>We use essential local storage to remember your privacy choices and triage history. We do not use third-party tracking cookies.</p>
+    
+    <a href="index.html" class="primary button" style="margin-top: 2rem;">Return to App</a>
+  </main>
+</body>
+</html>
