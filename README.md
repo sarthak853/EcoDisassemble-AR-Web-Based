@@ -1,6 +1,7 @@
 # EcoDisassemble AR — Web-Based Progressive Web Application (PWA)
 
 [![Live PWA](https://img.shields.io/badge/Live%20Demo-Vercel%20Production-00FF88?style=for-the-badge&logo=vercel)](https://ecodisassemble-ar.vercel.app)
+[![Android APK](https://img.shields.io/badge/Android%20App-Download%20APK%20(v1.0)-00FF88?style=for-the-badge&logo=android)](https://github.com/sarthak853/EcoDisassemble-AR-Android-Based/raw/main/apk/EcoDisassemble-AR.apk)
 [![Platform](https://img.shields.io/badge/Platform-Progressive%20Web%20App-00E5FF?style=for-the-badge&logo=pwa)](https://ecodisassemble-ar.vercel.app)
 [![Runtime](https://img.shields.io/badge/Runtime-ONNX%20Runtime%20Web%20(WebGL%20%2F%20WASM)-3B82F6?style=for-the-badge&logo=webassembly)](https://github.com/microsoft/onnxruntime)
 [![Spatial AR](https://img.shields.io/badge/Spatial%20AR-W3C%20WebXR%20%2F%20A--Frame-FF3B30?style=for-the-badge&logo=aframe)](https://aframe.io)
