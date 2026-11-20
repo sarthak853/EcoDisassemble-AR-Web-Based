@@ -8,6 +8,8 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <title>EcoDisassemble AR — A System for E-Waste Component Salavage</title>
 </head>
 <body>
@@ -78,8 +80,11 @@
                 <svg viewBox="0 0 48 48"><path d="M7 16h8l3-5h12l3 5h8v23H7z"/><circle cx="24" cy="27" r="8"/></svg>
               </div>
               <b>Take a photo or upload one</b>
-              <span>JPG, PNG or WEBP · no cloud upload</span>
-              <span class="upload-chip">CHOOSE IMAGE</span>
+              <span>JPG, PNG or WEBP · on-device ONNX triage</span>
+              <div style="display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap; margin-top:0.5rem;">
+                <span class="upload-chip">CHOOSE FILE</span>
+                <button type="button" class="upload-chip" id="startLiveAR" style="background: #c8f36b; color: #07110f; border: none; cursor: pointer; font-weight: 700;">⚡ LIVE AR SCANNER</button>
+              </div>
             </div>
             <div class="image-wrap" id="imageWrap" hidden>
               <img id="imagePreview" alt="Selected electronic item" />
@@ -265,6 +270,26 @@
     </div>
   </dialog>
 
-  <script src="app.js" defer></script>
+  <dialog id="arDialog" class="panel" style="max-width: 900px; width: 95vw; height: 85vh; padding: 0; background: #07110f; border: 1px solid #c8f36b; border-radius: 12px; overflow: hidden;" aria-labelledby="arDialogTitle">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid rgba(200,243,107,0.2); background: rgba(7,17,15,0.9);">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #c8f36b;"></span>
+        <h3 id="arDialogTitle" style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #fff; letter-spacing: 0.05em;">LIVE WEBRTC / WEBXR AR SCANNER</h3>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span id="arInferenceBadge" style="font-size: 0.75rem; color: #c8f36b; background: rgba(200,243,107,0.15); padding: 2px 8px; border-radius: 4px; font-family: monospace;">EDGE-AI: 30 FPS</span>
+        <button type="button" id="closeARBtn" class="ghost compact" style="margin: 0;" aria-label="Close AR scanner">✕ CLOSE</button>
+      </div>
+    </div>
+    <div id="arLiveContainer" style="position: relative; width: 100%; height: calc(100% - 105px); background: #000;">
+      <!-- ARViewer dynamically injects video feed, canvas overlay, and A-Frame scene here -->
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-top: 1px solid rgba(200,243,107,0.2); background: rgba(7,17,15,0.9);">
+      <div id="arStatusText" style="font-size: 0.8rem; color: #aaa;">Scanning for macro-damage (swollen batteries, broken ports)...</div>
+      <button type="button" class="primary compact" id="captureARFrameBtn">Capture & Triage This Frame ➔</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>

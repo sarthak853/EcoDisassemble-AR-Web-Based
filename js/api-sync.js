@@ -1,54 +1,90 @@
+/**
+ * EcoDisassemble AR - Telemetry Cloud Sync (Privacy Gate)
+ * 
+ * Enforces strict on-device data minimization before transmitting
+ * replacement part telemetry to Supabase. Guarantees that photos,
+ * device serials, and diagnostic notes are never sent to the cloud.
+ */
+
 export class APISync {
   constructor(dbStore) {
     this.dbStore = dbStore;
-    this.endpoint = 'https://mock-supabase-url.com/rest/v1/telemetry_syncs';
+    this.endpoint = 'https://jcfucwcgtsgaircsxjgd.supabase.co/rest/v1/telemetry_syncs';
+    this.apiKey = 'sb_publishable_W58bAMFyLMptnUvVeeagnQ_bqpVcaR7';
     this.lastSyncTime = 0;
+    this.rateLimitInterval = 10000; // 10 second debounce for demo (normally 1 hour in prod)
+    this.maxPayloadBytes = 10240;    // Hard 10KB payload limit
   }
-  
+
+  /**
+   * Validates and transmits the replacement part manifest to Supabase.
+   * 
+   * @param {Array<{ part_name: string, quantity: number }>} manifestData
+   * @returns {Promise<{ success: boolean, message: string }>}
+   */
   async syncToCloud(manifestData) {
-    // 1. Rate limiting
+    // 1. Rate Limiting / Debounce Protection
     const now = Date.now();
-    if (now - this.lastSyncTime < 10000) { // 10 second debounce for demo (normally 1 hour)
-      throw new Error("Rate limit exceeded. Please wait before syncing again.");
+    if (now - this.lastSyncTime < this.rateLimitInterval) {
+      const waitSec = Math.ceil((this.rateLimitInterval - (now - this.lastSyncTime)) / 1000);
+      throw new Error(`Rate limit active. Please wait ${waitSec}s before syncing again.`);
     }
     this.lastSyncTime = now;
-    
-    // 2. Strict JSON schema validation (Privacy Gate)
-    if (!Array.isArray(manifestData)) throw new Error("Invalid payload format");
-    const payload = manifestData.map(item => ({
-      part_name: String(item.part_name || 'unknown'),
-      quantity: Number(item.quantity || 1),
-      hazard_flag: Boolean(item.hazard_flag || false)
-    }));
-    
-    // 3. Payload size limit (10KB limit)
-    if (JSON.stringify(payload).length > 10240) {
-      throw new Error("Payload size limit exceeded. Too much data.");
+
+    // 2. Strict JSON Schema Validation (Privacy Invariant: part_name & quantity only)
+    if (!Array.isArray(manifestData) || manifestData.length === 0) {
+      throw new Error("Invalid payload: expected non-empty array of parts.");
     }
-    
+
+    const payload = manifestData.map(item => ({
+      part_name: String(item.part_name || 'unknown').substring(0, 120),
+      quantity: Math.max(1, Math.min(99, parseInt(item.quantity, 10) || 1))
+    }));
+
+    // 3. Payload Size Boundary Check
+    const serialized = JSON.stringify(payload);
+    if (new TextEncoder().encode(serialized).length > this.maxPayloadBytes) {
+      throw new Error("Payload size limit exceeded (max 10KB). Too many items.");
+    }
+
     // 4. Timeouts & Abort Controller
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-    
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+
     try {
-      console.log("Syncing restricted payload to Supabase...", payload);
-      
-      // MOCK FETCH implementation for offline demo:
-      // const response = await fetch(this.endpoint, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(payload),
-      //   signal: controller.signal
-      // });
-      // if (!response.ok) throw new Error("Sync API failed with status " + response.status);
-      
+      console.log("[APISync] Transmitting minimized manifest through privacy gate:", payload);
+
+      // Live Supabase PostgREST Fetch Call
+      const response = await fetch(this.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': this.apiKey,
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ payload }),
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Supabase API responded with status ${response.status}: ${errorText}`);
+      }
+
       clearTimeout(timeoutId);
-      return { success: true, message: "Sync successful" };
+
+      // Mark records as synced in IndexedDB
+      if (this.dbStore && typeof this.dbStore.markSynced === 'function') {
+        const unsynced = await this.dbStore.getUnsynced();
+        await this.dbStore.markSynced(unsynced.map(r => r.id));
+      }
+
+      return { success: true, message: `Successfully synchronized ${payload.length} part(s).` };
     } catch (err) {
       clearTimeout(timeoutId);
-      console.error("Sync error:", err);
-      // 5. Handle failed network requests gracefully
-      return { success: false, message: err.message };
+      console.error("[APISync] Network sync notice:", err);
+      return { success: false, message: err.name === 'AbortError' ? 'Sync timed out after 10s.' : err.message };
     }
   }
 }
